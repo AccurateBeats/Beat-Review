@@ -58,7 +58,7 @@ reader.onload = function() {
         formData.append('genre', genre);
         formData.append('notes', notes);
         // VIKTIGT: Vi byter ut denna i Steg 4!
-        const serverUrl = 'BYT_UT_MOT_DIN_RENDER_URL/upload';
+        const serverUrl = 'beats-server-ymi9.onrender.com/upload';
         fetch(serverUrl, { method: 'POST', body: formData })
         .then(async res => {
 file.name);
