@@ -8,7 +8,7 @@
 </head>
 <body style="background-color: #f0f0f0; padding: 20px;">
     <div id="app" style="font-family: sans-serif; max-width: 450px; margin: 0 auto; padding: 25px; background: #fff; border-radius: 10px;">
-        <h3>Upload Your Track</h3>
+        <h3>Upload Your Track (Limit: 20)</h3>
         
         <label>Artist Name:</label>
         <input type="text" id="artistInput" style="width:100%; margin-bottom:15px; padding:10px;">
@@ -26,29 +26,14 @@
         <input type="file" id="fileInput" accept="audio/mpeg" style="width:100%; margin-bottom:25px;">
 
         <button id="tagButton" style="width:100%; padding:12px; background:#222; color:#fff; cursor:pointer;">Send to Dropbox</button>
-        <div id="statusMessage" style="display:none; color:green; margin-top:15px;"></div>
+        <div id="statusMessage" style="display:none; margin-top:15px; font-weight: bold;"></div>
     </div>
 
     <script>
-        const submissionsOpen = true; // true = open, false = closed
-
         const btn = document.getElementById('tagButton');
-        const statusMessage = document.getElementById('statusMessage');
+        const statusBox = document.getElementById('statusMessage');
 
-        if (!submissionsOpen) {
-            btn.disabled = true;
-            btn.innerText = "Submissions Closed";
-            btn.style.background = "#999";
-            btn.style.cursor = "not-allowed";
-
-            statusMessage.innerText = "Beat submissions are currently closed. Please check back later.";
-            statusMessage.style.display = "block";
-            statusMessage.style.color = "red";
-        }
-
-        document.getElementById('tagButton').addEventListener('click', () => {
-            if (!submissionsOpen) return;
-
+        btn.addEventListener('click', () => {
             const file = document.getElementById('fileInput').files[0];
             const artist = document.getElementById('artistInput').value;
             const title = document.getElementById('titleInput').value;
@@ -76,51 +61,50 @@
                     formData.append('genre', genre);
                     formData.append('notes', notes);
 
-                    const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
+                    const serverUrl = 'https://beats-2kd7.onrender.com/upload';
 
                     fetch(serverUrl, { method: 'POST', body: formData })
-                    .then(async res => {
-                        if (res.ok) {
-                            statusMessage.innerText = await res.text();
-                            statusMessage.style.display = 'block';
-                            statusMessage.style.color = 'green';
+                        .then(async res => {
+                            const responseText = await res.text();
 
-                            document.getElementById('fileInput').value = '';
-                            document.getElementById('artistInput').value = '';
-                            document.getElementById('titleInput').value = '';
-                            document.getElementById('genreInput').value = '';
-                            document.getElementById('notesInput').value = '';
-                        } else {
-                            throw new Error("Server responded with an error.");
-                        }
-                    }).catch(error => {
-                        console.error(error);
-                        alert("CRASH REPORT (Network): " + error.message);
-                    }).finally(() => {
-                        btn.innerText = "Send to Dropbox";
-                        btn.disabled = false;
+                            if (res.ok) {
+                                statusBox.style.color = 'green';
+                                statusBox.innerText = responseText;
+                                statusBox.style.display = 'block';
 
-                        if (!submissionsOpen) {
-                            btn.disabled = true;
-                            btn.innerText = "Submissions Closed";
-                            btn.style.background = "#999";
-                            btn.style.cursor = "not-allowed";
-                        }
-                    });
-                } catch(e) { 
+                                document.getElementById('fileInput').value = '';
+                                document.getElementById('artistInput').value = '';
+                                document.getElementById('titleInput').value = '';
+                                document.getElementById('genreInput').value = '';
+                                document.getElementById('notesInput').value = '';
+                            } else if (res.status === 403) {
+                                alert(responseText);
+                                statusBox.style.color = 'red';
+                                statusBox.innerText = responseText;
+                                statusBox.style.display = 'block';
+                                btn.style.display = 'none';
+                            } else {
+                                throw new Error(responseText);
+                            }
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            alert("CRASH REPORT (Network): " + error.message);
+                        })
+                        .finally(() => {
+                            if (btn.style.display !== 'none') {
+                                btn.innerText = "Send to Dropbox";
+                                btn.disabled = false;
+                            }
+                        });
+                } catch (e) {
                     console.error(e);
-                    alert("CRASH REPORT (Tagging): " + e.name + " - " + e.message); 
+                    alert("CRASH REPORT (Tagging): " + e.name + " - " + e.message);
                     btn.innerText = "Send to Dropbox";
                     btn.disabled = false;
-
-                    if (!submissionsOpen) {
-                        btn.disabled = true;
-                        btn.innerText = "Submissions Closed";
-                        btn.style.background = "#999";
-                        btn.style.cursor = "not-allowed";
-                    }
                 }
             };
+
             reader.readAsArrayBuffer(file);
         });
     </script>
