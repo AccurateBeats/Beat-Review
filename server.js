@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
 const MAX_SUBMISSIONS = 20;
@@ -17,7 +18,14 @@ function getDropboxClient() {
     });
 }
 
-async function countMp3Files(dbx, folderPath) {
+function sanitizeFileName(name) {
+    return name
+        .replace(/[\/\\:*?"<>|]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+async function listAllEntries(dbx, folderPath) {
     let allEntries = [];
 
     let response = await dbx.filesListFolder({
@@ -33,19 +41,54 @@ async function countMp3Files(dbx, folderPath) {
         allEntries = allEntries.concat(response.result.entries);
     }
 
-    return allEntries.filter(item =>
+    return allEntries;
+}
+
+async function countMp3Files(dbx, folderPath) {
+    const entries = await listAllEntries(dbx, folderPath);
+
+    return entries.filter(item =>
         item['.tag'] === 'file' &&
         item.name &&
         item.name.toLowerCase().endsWith('.mp3')
     ).length;
 }
 
-function sanitizeFileName(name) {
-    return name
-        .replace(/[\/\\:\*\?"<>\|]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-}
+app.get('/', (req, res) => {
+    res.send('Server is running.');
+});
+
+app.get('/debug-dropbox', async (req, res) => {
+    try {
+        if (!process.env.DROPBOX_ACCESS_TOKEN) {
+            return res.status(500).send('DEBUG: Dropbox token is missing on the server.');
+        }
+
+        const dbx = getDropboxClient();
+        const entries = await listAllEntries(dbx, DROPBOX_FOLDER_PATH);
+        const mp3Count = entries.filter(item =>
+            item['.tag'] === 'file' &&
+            item.name &&
+            item.name.toLowerCase().endsWith('.mp3')
+        ).length;
+
+        return res.status(200).json({
+            ok: true,
+            folderPath: DROPBOX_FOLDER_PATH,
+            totalEntries: entries.length,
+            mp3Count: mp3Count,
+            sampleNames: entries.slice(0, 10).map(item => item.name)
+        });
+    } catch (error) {
+        console.error('DEBUG DROPBOX ERROR FULL:', error);
+        return res.status(500).json({
+            ok: false,
+            status: error?.status || null,
+            message: error?.message || 'Unknown error',
+            error: error?.error || null
+        });
+    }
+});
 
 app.post('/upload', upload.single('file'), async (req, res) => {
     try {
@@ -58,7 +101,6 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         }
 
         const dbx = getDropboxClient();
-
         const mp3Count = await countMp3Files(dbx, DROPBOX_FOLDER_PATH);
 
         if (mp3Count >= MAX_SUBMISSIONS) {
@@ -117,16 +159,13 @@ UPLOADED AT: ${timestamp} (UTC)
 
         console.log(`Uploaded successfully: ${cleanBaseName} (Total Submissions: ${mp3Count + 1}/${MAX_SUBMISSIONS})`);
         return res.status(200).send(`Success! Files saved as: ${cleanBaseName}`);
-} catch (error) {
-    console.error('Dropbox Upload Error FULL:', error);
-    console.error('Dropbox Upload Error STATUS:', error?.status);
-    console.error('Dropbox Upload Error MESSAGE:', error?.message);
-    console.error('Dropbox Upload Error BODY:', error?.error);
+    } catch (error) {
+        console.error('UPLOAD ERROR FULL:', error);
 
-    return res.status(500).send(
-        `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${error?.message || 'none'}`
-    );
-}
+        return res.status(500).send(
+            `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${error?.message || 'none'}`
+        );
+    }
 });
 
 const PORT = process.env.PORT || 10000;
