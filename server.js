@@ -209,9 +209,3 @@ Byt allt i index.html till detta:
     </script>
 </body>
 </html>
-
-
-What this accomplishes:
-	1	Accurate Tracking: Because it physically counts the .mp3 files in your Dropbox folder, it is impossible for users to trick it or bypass the limit.
-	2	Graceful UI Handling: If someone is the 21st person to hit the button, they will get a clean popup explaining that submissions are closed. The Upload button will also disappear so they can't keep spamming it.
-	3	Easy Maintenance: If you ever want to increase the limit to 50, just change the number 20 in the server.js code!
