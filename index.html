@@ -38,3 +38,45 @@ const file = document.getElementById('fileInput').files[0];
 const artist = document.getElementById('artistInput').value;
 const title = document.getElementById('titleInput').value;
 const genre = document.getElementById('genreInput').value;
+   10MB.');
+if (!file) return alert('Välj en fil!');
+if (file.size > 10485760) return alert('Filen är för stor! Max
+const btn = document.getElementById('tagButton');
+btn.innerText = "Laddar upp...";
+btn.disabled = true;
+const reader = new FileReader();
+reader.onload = function() {
+    try {
+        const writer = new browserID3Writer(reader.result);
+        if (artist) writer.setFrame('TPE1', [artist]);
+        if (title) writer.setFrame('TIT2', title);
+        writer.addTag();
+        const formData = new FormData();
+        formData.append('file', writer.getBlob(), 'tagged_' +
+        formData.append('artist', artist);
+        formData.append('title', title);
+        formData.append('genre', genre);
+        formData.append('notes', notes);
+        // VIKTIGT: Vi byter ut denna i Steg 4!
+        const serverUrl = 'BYT_UT_MOT_DIN_RENDER_URL/upload';
+        fetch(serverUrl, { method: 'POST', body: formData })
+        .then(async res => {
+file.name);
+const notes = document.getElementById('notesInput').value;
+                        if(res.ok) {
+document.getElementById('statusMessage').innerText = await res.text();
+document.getElementById('statusMessage').style.display = 'block';
+                        }
+false; }
+};
+    }).finally(() => {
+        btn.innerText = "Skicka till Dropbox";
+        btn.disabled = false;
+    });
+} catch(e) { alert("Fel vid taggning."); btn.disabled =
+    reader.readAsArrayBuffer(file);
+});
+</script>
+
+</body>
+</html>
