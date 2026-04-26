@@ -117,14 +117,16 @@ UPLOADED AT: ${timestamp} (UTC)
 
         console.log(`Uploaded successfully: ${cleanBaseName} (Total Submissions: ${mp3Count + 1}/${MAX_SUBMISSIONS})`);
         return res.status(200).send(`Success! Files saved as: ${cleanBaseName}`);
-    } catch (error) {
-        console.error('Dropbox Upload Error FULL:', error);
-        console.error('Dropbox Upload Error STATUS:', error?.status);
-        console.error('Dropbox Upload Error MESSAGE:', error?.message);
-        console.error('Dropbox Upload Error BODY:', error?.error);
+} catch (error) {
+    console.error('Dropbox Upload Error FULL:', error);
+    console.error('Dropbox Upload Error STATUS:', error?.status);
+    console.error('Dropbox Upload Error MESSAGE:', error?.message);
+    console.error('Dropbox Upload Error BODY:', error?.error);
 
-        return res.status(500).send('An error occurred during the Dropbox upload process.');
-    }
+    return res.status(500).send(
+        `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${error?.message || 'none'}`
+    );
+}
 });
 
 const PORT = process.env.PORT || 10000;
