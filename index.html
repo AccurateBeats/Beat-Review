@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beats Uploader</title>
+    <script src="https://cdn.jsdelivr.net/npm/browser-id3-writer@4.4.0/
+dist/browser-id3-writer.js"></script>
+</head>
+<body style="background-color: #f0f0f0; padding: 20px;">
+    <div id="app" style="font-family: sans-serif; max-width: 450px;
+margin: 0 auto; padding: 25px; background: #fff; border-radius: 10px;">
+        <h3>Ladda upp din låt</h3>
+        <label>Artist:</label>
+        <input type="text" id="artistInput" style="width:100%; margin-
+bottom:15px; padding:10px;">
+        <label>Låttitel:</label>
+        <input type="text" id="titleInput" style="width:100%; margin-
+bottom:15px; padding:10px;">
+        <label>Genre:</label>
+        <input type="text" id="genreInput" style="width:100%; margin-
+bottom:15px; padding:10px;">
+        <label>Anteckningar:</label>
+        <textarea id="notesInput" rows="3" style="width:100%; margin-
+bottom:20px; padding:10px;"></textarea>
+        <label>Välj MP3-fil (Max 10MB):</label>
+        <input type="file" id="fileInput" accept="audio/mpeg"
+style="width:100%; margin-bottom:25px;">
+        <button id="tagButton" style="width:100%; padding:12px;
+background:#222; color:#fff; cursor:pointer;">Skicka till Dropbox</button>
+        <div id="statusMessage" style="display:none; color:green; margin-
+top:15px;"></div>
+</div>
+    <script>
+        document.getElementById('tagButton').addEventListener('click', ()
+=> {
+const file = document.getElementById('fileInput').files[0];
+const artist = document.getElementById('artistInput').value;
+const title = document.getElementById('titleInput').value;
+const genre = document.getElementById('genreInput').value;
