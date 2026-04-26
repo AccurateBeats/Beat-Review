@@ -16,11 +16,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         const file = req.file;
         const { artist, title, genre, notes } = req.body;
  
-        // NEW NAMING LOGIC: "Artist - Title"
-        // 1. If both exist: "Artist - Title"
-        // 2. If only artist: "Artist"
-        // 3. If only title: "Title"
-        // 4. Fallback: Original Filename
+        // Naming logic: "Artist - Title"
         let cleanBaseName;
         if (artist && title) {
             cleanBaseName = `${artist.trim()} - ${title.trim()}`;
@@ -39,8 +35,29 @@ app.post('/upload', upload.single('file'), async (req, res) => {
             mode: 'overwrite'
         });
  
-        // 2. Upload the Metadata Text file
-        const textContent = `Artist: ${artist}\nTitle: ${title}\nGenre: ${genre}\nNotes: ${notes}`;
+        // 2. CREATE PRETTIER TEXT CONTENT
+        // We use backticks (`) to create a multi-line "template" 
+        const timestamp = new Date().toLocaleString('en-US', { timeZone: 'UTC' });
+ 
+        const textContent = `
+=========================================
+         TRACK SUBMISSION INFO
+=========================================
+ 
+ARTIST:      ${artist || 'Not specified'}
+TITLE:       ${title || 'Not specified'}
+GENRE:       ${genre || 'Not specified'}
+ 
+-----------------------------------------
+NOTES:
+${notes || 'No extra notes provided.'}
+ 
+-----------------------------------------
+UPLOADED AT: ${timestamp} (UTC)
+=========================================
+        `.trim();
+ 
+        // 3. Upload the Metadata Text file
         await dbx.filesUpload({
             path: `/${cleanBaseName}.txt`,
             contents: Buffer.from(textContent),
