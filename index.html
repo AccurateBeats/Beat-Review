@@ -30,7 +30,25 @@
     </div>
 
     <script>
+        const submissionsOpen = false; // true = open, false = closed
+
+        const btn = document.getElementById('tagButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        if (!submissionsOpen) {
+            btn.disabled = true;
+            btn.innerText = "Submissions Closed";
+            btn.style.background = "#999";
+            btn.style.cursor = "not-allowed";
+
+            statusMessage.innerText = "Beat submissions are currently closed. Please check back later.";
+            statusMessage.style.display = "block";
+            statusMessage.style.color = "red";
+        }
+
         document.getElementById('tagButton').addEventListener('click', () => {
+            if (!submissionsOpen) return;
+
             const file = document.getElementById('fileInput').files[0];
             const artist = document.getElementById('artistInput').value;
             const title = document.getElementById('titleInput').value;
@@ -40,14 +58,12 @@
             if (!file) return alert('Please select an MP3 file first!');
             if (file.size > 10485760) return alert('File is too large! Max 10MB.');
 
-            const btn = document.getElementById('tagButton');
             btn.innerText = "Processing & Uploading...";
             btn.disabled = true;
 
             const reader = new FileReader();
             reader.onload = function() {
                 try {
-                    // THE BUG IS FIXED HERE: It is ID3Writer, NOT browserID3Writer!
                     const writer = new ID3Writer(reader.result);
                     if (artist) writer.setFrame('TPE1', [artist]);
                     if (title) writer.setFrame('TIT2', title);
@@ -60,15 +76,15 @@
                     formData.append('genre', genre);
                     formData.append('notes', notes);
 
-                    // IMPORTANT: Put your Render URL here! 
                     const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
 
                     fetch(serverUrl, { method: 'POST', body: formData })
                     .then(async res => {
-                        if(res.ok) {
-                            document.getElementById('statusMessage').innerText = await res.text();
-                            document.getElementById('statusMessage').style.display = 'block';
-                            // Clear out the form after success
+                        if (res.ok) {
+                            statusMessage.innerText = await res.text();
+                            statusMessage.style.display = 'block';
+                            statusMessage.style.color = 'green';
+
                             document.getElementById('fileInput').value = '';
                             document.getElementById('artistInput').value = '';
                             document.getElementById('titleInput').value = '';
@@ -83,12 +99,26 @@
                     }).finally(() => {
                         btn.innerText = "Send to Dropbox";
                         btn.disabled = false;
+
+                        if (!submissionsOpen) {
+                            btn.disabled = true;
+                            btn.innerText = "Submissions Closed";
+                            btn.style.background = "#999";
+                            btn.style.cursor = "not-allowed";
+                        }
                     });
                 } catch(e) { 
                     console.error(e);
                     alert("CRASH REPORT (Tagging): " + e.name + " - " + e.message); 
                     btn.innerText = "Send to Dropbox";
-                    btn.disabled = false; 
+                    btn.disabled = false;
+
+                    if (!submissionsOpen) {
+                        btn.disabled = true;
+                        btn.innerText = "Submissions Closed";
+                        btn.style.background = "#999";
+                        btn.style.cursor = "not-allowed";
+                    }
                 }
             };
             reader.readAsArrayBuffer(file);
