@@ -3,46 +3,54 @@ const multer = require('multer');
 const { Dropbox } = require('dropbox');
 const cors = require('cors');
 require('dotenv').config();
-
+ 
 const app = express();
-
-// Allows your GitHub Pages site to securely send files to this server
+ 
+// Permits communication from your GitHub Pages site
 app.use(cors()); 
-
-// Temporarily stores the uploaded file in the server's memory
+ 
+// Stores the file in memory temporarily before sending to Dropbox
 const upload = multer({ storage: multer.memoryStorage() }); 
-
-// Catches the file and sends it to Dropbox
+ 
 app.post('/upload', upload.single('file'), async (req, res) => {
     try {
-        // Unlocks Dropbox using your secret key
         const dbx = new Dropbox({ accessToken: process.env.DROPBOX_ACCESS_TOKEN });
-        
+ 
         const file = req.file;
         const { artist, title, genre, notes } = req.body;
-
-        // 1. Uploads the tagged MP3 file to Dropbox
+ 
+        // NAMING LOGIC: 
+        // We use the Song Title as the filename. 
+        // If the Title field is empty, we use the original filename (minus the .mp3).
+        const cleanBaseName = title ? title.trim() : file.originalname.replace(/\.[^/.]+$/, "");
+ 
+        // 1. Upload the MP3 file
+        // Path example: /Song Title.mp3
         await dbx.filesUpload({
-            path: `/${file.originalname}`,
-            contents: file.buffer
+            path: `/${cleanBaseName}.mp3`,
+            contents: file.buffer,
+            mode: 'overwrite' // Replaces the file if you upload a new version with the same name
         });
-
-        // 2. Creates a text document with the answers and uploads it
-        const answersContent = `Artist: ${artist}\nTitle: ${title}\nGenre: ${genre}\nNotes: ${notes}`;
+ 
+        // 2. Upload the Metadata Text file
+        // Path example: /Song Title.txt
+        const textContent = `Artist: ${artist}\nTitle: ${title}\nGenre: ${genre}\nNotes: ${notes}`;
         await dbx.filesUpload({
-            path: `/${title}_Answers.txt`,
-            contents: Buffer.from(answersContent)
+            path: `/${cleanBaseName}.txt`,
+            contents: Buffer.from(textContent),
+            mode: 'overwrite'
         });
-
-        res.status(200).send('Files successfully uploaded to Dropbox!');
-
+ 
+        console.log(`Success! Uploaded: ${cleanBaseName}.mp3 and ${cleanBaseName}.txt`);
+        res.status(200).send(`Files successfully saved as "${cleanBaseName}"`);
+ 
     } catch (error) {
         console.error("Dropbox Upload Error:", error);
-        res.status(500).send('An error occurred while uploading to the server.');
+        res.status(500).send('An error occurred during the Dropbox upload process.');
     }
 });
-
-const PORT = process.env.PORT || 3000;
+ 
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
