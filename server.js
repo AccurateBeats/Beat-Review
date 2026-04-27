@@ -14,7 +14,9 @@ const DROPBOX_FOLDER_PATH = '';
 
 function getDropboxClient() {
     return new Dropbox({
-        accessToken: process.env.DROPBOX_ACCESS_TOKEN
+        clientId: process.env.DROPBOX_APP_KEY,
+        clientSecret: process.env.DROPBOX_APP_SECRET,
+        refreshToken: process.env.DROPBOX_REFRESH_TOKEN
     });
 }
 
@@ -60,8 +62,8 @@ app.get('/', (req, res) => {
 
 app.get('/debug-dropbox', async (req, res) => {
     try {
-        if (!process.env.DROPBOX_ACCESS_TOKEN) {
-            return res.status(500).send('DEBUG: Dropbox token is missing on the server.');
+        if (!process.env.DROPBOX_APP_KEY || !process.env.DROPBOX_APP_SECRET || !process.env.DROPBOX_REFRESH_TOKEN) {
+            return res.status(500).send('DEBUG: Dropbox credentials are missing on the server.');
         }
 
         const dbx = getDropboxClient();
@@ -92,8 +94,8 @@ app.get('/debug-dropbox', async (req, res) => {
 
 app.post('/upload', upload.single('file'), async (req, res) => {
     try {
-        if (!process.env.DROPBOX_ACCESS_TOKEN) {
-            return res.status(500).send('Dropbox token is missing on the server.');
+        if (!process.env.DROPBOX_APP_KEY || !process.env.DROPBOX_APP_SECRET || !process.env.DROPBOX_REFRESH_TOKEN) {
+            return res.status(500).send('Dropbox credentials are missing on the server.');
         }
 
         if (!req.file) {
@@ -162,8 +164,15 @@ UPLOADED AT: ${timestamp} (UTC)
     } catch (error) {
         console.error('UPLOAD ERROR FULL:', error);
 
+        let errorMessage = 'Unknown error';
+        if (error?.error?.error_summary) {
+            errorMessage = error.error.error_summary;
+        } else if (error?.message) {
+            errorMessage = error.message;
+        }
+
         return res.status(500).send(
-            `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${error?.message || 'none'}`
+            `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${errorMessage}`
         );
     }
 });
