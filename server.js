@@ -106,7 +106,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
         const mp3Count = await countMp3Files(dbx, DROPBOX_FOLDER_PATH);
 
         if (mp3Count >= MAX_SUBMISSIONS) {
-            return res.status(403).send(`Submissions are officially closed! We have reached our ${MAX_SUBMISSIONS} beat limit.`);
+            return res.status(403).send(`Submissions are closed! Either it's not open yet OR we've reached the ${MAX_SUBMISSIONS} beat limit.`);
         }
 
         const file = req.file;
