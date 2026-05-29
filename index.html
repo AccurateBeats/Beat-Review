@@ -28,11 +28,42 @@
         <button id="tagButton" style="width:100%; padding:12px; background:#222; color:#fff; cursor:pointer;">Send to Dropbox</button>
         <div id="statusMessage" style="display:none; margin-top:15px; font-weight:bold;"></div>
     </div>
+    <div id="submissions-closed" style="display:none; font-family: sans-serif; max-width: 450px; margin: 0 auto; padding: 25px; background: #fff; border-radius: 10px;">
+        <h3>Submissions Closed</h3>
+        Submissions are currently not being accepted. Please tune in to the <a href="https://www.accuratebeats.com/beatreview">Beat Review livestream</a> and wait for my announcement that submissions are being accepted. This form will be available then, and will close once 20 tracks have been submitted.
+    </div>
 
     <script>
+        const appContainer = document.getElementById('app');
+        const closedContainer = document.getElementById('submissions-closed');
         const btn = document.getElementById('tagButton');
         const statusBox = document.getElementById('statusMessage');
-const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
+        const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
+        const debugUrl = 'https://beats-server-ymi9.onrender.com/debug-dropbox';
+
+        async function updateSubmissionAvailability() {
+            try {
+                const response = await fetch(debugUrl);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch Dropbox debug status.');
+                }
+
+                const data = await response.json();
+
+                if (typeof data.mp3Count === 'number' && data.mp3Count >= 20) {
+                    appContainer.style.display = 'none';
+                    closedContainer.style.display = 'block';
+                } else {
+                    appContainer.style.display = 'block';
+                    closedContainer.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Dropbox debug status check failed:', error);
+            }
+        }
+
+        updateSubmissionAvailability();
         
         btn.addEventListener('click', () => {
             const file = document.getElementById('fileInput').files[0];
