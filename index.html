@@ -3,49 +3,887 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beats Uploader</title>
+    <title>Beat Review — Upload</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/browser-id3-writer@4.4.0/dist/browser-id3-writer.js"></script>
+    <!-- BEAT_REVIEW_CLOCK_STYLES -->
+    <style id="beat-review-clock-styles">
+        /* Replaced on deploy by clock2.html via Beat Review Admin */
+    </style>
+    <!-- /BEAT_REVIEW_CLOCK_STYLES -->
+    <style>
+        :root {
+            --mustard: #cfa12a;
+            --mustard-deep: #b8891f;
+            --brown: #392618;
+            --brown-soft: #4a3424;
+            --cream: #e8d7bf;
+            --cream-deep: #decaa8;
+            --ink: #392618;
+            --muted: rgba(57, 38, 24, 0.62);
+            --line: rgba(57, 38, 24, 0.18);
+            --ok: #2f6b45;
+            --ok-bg: #d7ebdd;
+            --ok-line: #2f6b45;
+            --err: #8b2e2e;
+            --err-bg: #f0d4d4;
+            --err-line: #8b2e2e;
+            --warn-bg: #f3e2b8;
+            --font-display: "Fraunces", Georgia, serif;
+            --font-body: "Space Grotesk", system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--ink);
+            background: var(--mustard);
+            font-weight: 500;
+        }
+
+        a { color: inherit; }
+
+        .site-header {
+            background: var(--mustard);
+            border-bottom: 2px solid var(--brown);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--brown);
+        }
+
+        .logo-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--brown);
+            color: var(--mustard);
+            display: grid;
+            place-items: center;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 0.72rem;
+            line-height: 1;
+            text-align: center;
+            letter-spacing: -0.02em;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--brown);
+            opacity: 0.85;
+        }
+
+        .header-link:hover { opacity: 1; text-decoration: underline; }
+
+        .hero {
+            background: var(--cream);
+            border-bottom: 2px solid var(--brown);
+            padding: 42px 20px 36px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: clamp(2.6rem, 9vw, 4.4rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            color: var(--brown);
+        }
+
+        .hero p {
+            margin: 14px 0 0;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--brown);
+        }
+
+        .page {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 28px 16px 56px;
+        }
+
+        #beat-review-clock-widget {
+            margin-bottom: 18px;
+            width: 100%;
+            color: var(--brown);
+        }
+
+        #beat-review-clock-widget p {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .panel {
+            background: var(--cream);
+            border: 2px solid var(--brown);
+            padding: 24px 22px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--brown);
+        }
+
+        .panel-head h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 1.65rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            color: var(--brown);
+        }
+
+        .panel-head .sub {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            font-weight: 500;
+        }
+
+        .slots {
+            min-width: 110px;
+            text-align: right;
+        }
+
+        .slots-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .slots-count {
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--brown);
+        }
+
+        .slots-count span {
+            color: var(--mustard-deep);
+        }
+
+        .slots-bar {
+            margin-top: 8px;
+            height: 8px;
+            background: rgba(57, 38, 24, 0.12);
+            overflow: hidden;
+            border: 1px solid var(--brown);
+        }
+
+        .slots-bar > i {
+            display: block;
+            height: 100%;
+            width: 0%;
+            background: var(--mustard);
+            transition: width 0.45s ease;
+        }
+
+        .slots.full .slots-count,
+        .slots.full .slots-count span {
+            color: var(--err);
+        }
+
+        .slots.full .slots-bar > i {
+            background: var(--err);
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--brown);
+            margin-bottom: 7px;
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            border: 2px solid var(--brown);
+            background: #f6eedf;
+            color: var(--brown);
+            border-radius: 0;
+            padding: 12px 14px;
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            outline: none;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: rgba(57, 38, 24, 0.4);
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            background: #fffaf0;
+            box-shadow: 3px 3px 0 var(--mustard);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 84px;
+        }
+
+        .dropzone {
+            position: relative;
+            border: 2px dashed var(--brown);
+            background: #f6eedf;
+            padding: 22px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.15s ease, box-shadow 0.15s ease;
+            margin-bottom: 16px;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            background: #fff4d8;
+            box-shadow: 3px 3px 0 var(--mustard);
+        }
+
+        .dropzone.has-file {
+            border-style: solid;
+            background: var(--ok-bg);
+            text-align: left;
+            padding: 14px 16px;
+        }
+
+        .dropzone input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .drop-idle .icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--brown);
+        }
+
+        .drop-idle strong {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--brown);
+        }
+
+        .drop-idle span {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .drop-file {
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dropzone.has-file .drop-idle { display: none; }
+        .dropzone.has-file .drop-file { display: flex; }
+
+        .file-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--brown);
+            color: var(--mustard);
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .file-meta strong {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+            word-break: break-all;
+            color: var(--brown);
+        }
+
+        .file-meta span {
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        .file-clear {
+            margin-left: auto;
+            border: 2px solid var(--brown);
+            background: var(--cream);
+            color: var(--brown);
+            width: 32px;
+            height: 32px;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            z-index: 2;
+            position: relative;
+            font-weight: 700;
+        }
+
+        .file-clear:hover {
+            background: var(--err-bg);
+            color: var(--err);
+        }
+
+        .submit {
+            width: 100%;
+            border: 2px solid var(--brown);
+            border-radius: 0;
+            padding: 14px 18px;
+            font: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--mustard);
+            background: var(--brown);
+            transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit:hover:not(:disabled) {
+            background: var(--brown-soft);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 rgba(57, 38, 24, 0.35);
+        }
+
+        .submit:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .submit.busy .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(207, 161, 42, 0.3);
+            border-top-color: var(--mustard);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .feedback {
+            display: none;
+            margin-top: 14px;
+            padding: 14px 16px;
+            border: 2px solid var(--brown);
+            animation: pop 0.3s ease both;
+        }
+
+        .feedback.show { display: block; }
+
+        .feedback.success {
+            background: var(--ok-bg);
+            border-color: var(--ok-line);
+            color: var(--ok);
+        }
+
+        .feedback.error {
+            background: var(--err-bg);
+            border-color: var(--err-line);
+            color: var(--err);
+        }
+
+        .feedback.limit {
+            background: var(--warn-bg);
+            border-color: var(--mustard-deep);
+            color: var(--brown);
+        }
+
+        .feedback-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+            color: inherit;
+        }
+
+        .feedback-body {
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: var(--brown);
+            font-weight: 500;
+        }
+
+        .feedback-meta {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border: 1.5px solid currentColor;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.45);
+            color: inherit;
+        }
+
+        #closed-message {
+            display: none;
+            text-align: center;
+            margin-top: 8px;
+            padding: 40px 24px;
+            background: var(--cream);
+            border: 2px solid var(--brown);
+        }
+
+        #closed-message h3 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0 0 10px;
+            color: var(--brown);
+        }
+
+        #closed-message p {
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        #dynamic-custom-message {
+            color: var(--mustard-deep) !important;
+            font-weight: 700;
+            font-size: 1.05rem !important;
+            margin: 12px 0 !important;
+        }
+
+        .hint {
+            margin-top: 14px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 500;
+        }
+
+        .site-footer {
+            text-align: center;
+            padding: 8px 16px 28px;
+            color: var(--brown);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .site-footer a {
+            color: var(--brown);
+            text-decoration: underline;
+        }
+
+        @keyframes pop {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 420px) {
+            .panel { padding: 18px 16px; }
+            .panel-head { flex-direction: column; }
+            .slots { text-align: left; width: 100%; }
+            .logo-text { font-size: 1.15rem; }
+        }
+    </style>
 </head>
-<body style="background-color: #f0f0f0; padding: 20px;">
-    <div id="app" style="font-family: sans-serif; max-width: 450px; margin: 0 auto; padding: 25px; background: #fff; border-radius: 10px;">
-        <h3>Upload Your Track (Limit: 20)</h3>
+<body>
+    <header class="site-header">
+        <a class="logo" href="https://www.accuratebeats.com/" target="_blank" rel="noopener">
+            <span class="logo-mark">Acc.</span>
+            <span class="logo-text">Accurate Beats</span>
+        </a>
+        <a class="header-link" href="https://www.accuratebeats.com/" target="_blank" rel="noopener">accuratebeats.com</a>
+    </header>
 
-        <label>Artist Name:</label>
-        <input type="text" id="artistInput" style="width:100%; margin-bottom:15px; padding:10px;">
+    <section class="hero">
+        <h1>Beat Review</h1>
+        <p>Submit your track for the live stream</p>
+    </section>
 
-        <label>Song Title:</label>
-        <input type="text" id="titleInput" style="width:100%; margin-bottom:15px; padding:10px;">
+    <div class="page">
+        <!-- BEAT_REVIEW_CLOCK_HTML -->
+        <div id="beat-review-clock-widget">
+            <p>Countdown loads after deploy…</p>
+        </div>
+        <!-- /BEAT_REVIEW_CLOCK_HTML -->
 
-        <label>Genre:</label>
-        <input type="text" id="genreInput" style="width:100%; margin-bottom:15px; padding:10px;">
+        <div id="form-container" class="panel">
+            <div class="panel-head">
+                <div>
+                    <h2>Upload your track</h2>
+                    <p class="sub">MP3 only · max 10 MB</p>
+                </div>
+                <div class="slots" id="slotsWidget" title="Submission slots used this round">
+                    <div class="slots-label">Slots used</div>
+                    <div class="slots-count"><span id="slotsUsed">–</span>/<span id="slotsMax">20</span></div>
+                    <div class="slots-bar"><i id="slotsFill"></i></div>
+                </div>
+            </div>
 
-        <label>Extra Notes:</label>
-        <textarea id="notesInput" rows="3" style="width:100%; margin-bottom:20px; padding:10px;"></textarea>
+            <div class="field">
+                <label for="artistInput">Artist name</label>
+                <input type="text" id="artistInput" autocomplete="off" placeholder="Your artist name">
+            </div>
 
-        <label>Select MP3 File (Max 10MB):</label>
-        <input type="file" id="fileInput" accept="audio/mpeg" style="width:100%; margin-bottom:25px;">
+            <div class="field">
+                <label for="titleInput">Song title</label>
+                <input type="text" id="titleInput" autocomplete="off" placeholder="Track title">
+            </div>
 
-        <button id="tagButton" style="width:100%; padding:12px; background:#222; color:#fff; cursor:pointer;">Send to Dropbox</button>
-        <div id="statusMessage" style="display:none; margin-top:15px; font-weight:bold;"></div>
+            <div class="field">
+                <label for="genreInput">Genre</label>
+                <input type="text" id="genreInput" autocomplete="off" placeholder="e.g. Hip-Hop, R&amp;B, Pop">
+            </div>
+
+            <div class="field">
+                <label for="notesInput">Extra notes</label>
+                <textarea id="notesInput" rows="3" placeholder="Anything the reviewer should know"></textarea>
+            </div>
+
+            <div class="field">
+                <label>MP3 file</label>
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="fileInput" accept="audio/mpeg,.mp3">
+                    <div class="drop-idle">
+                        <div class="icon" aria-hidden="true">⬆</div>
+                        <strong>Drop MP3 here or click to browse</strong>
+                        <span>Max 10 MB · audio/mpeg</span>
+                    </div>
+                    <div class="drop-file">
+                        <div class="file-icon" aria-hidden="true">♫</div>
+                        <div class="file-meta">
+                            <strong id="fileName">track.mp3</strong>
+                            <span id="fileSize">0 MB</span>
+                        </div>
+                        <button type="button" class="file-clear" id="fileClear" aria-label="Remove file">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="submit" id="tagButton">
+                <span class="spinner" hidden></span>
+                <span class="label">Send to Dropbox</span>
+            </button>
+
+            <div id="statusMessage" class="feedback" role="status" aria-live="polite">
+                <div class="feedback-title" id="feedbackTitle"></div>
+                <div class="feedback-body" id="feedbackBody"></div>
+                <div class="feedback-meta" id="feedbackMeta"></div>
+            </div>
+
+            <p class="hint">You’ll see a clear success or error message after upload.</p>
+        </div>
+
+        <div id="closed-message">
+            <h3>Submissions closed</h3>
+            <p id="dynamic-custom-message" style="display: none;"></p>
+            <p>Please check back later.</p>
+        </div>
     </div>
 
+    <footer class="site-footer">
+        <a href="https://www.accuratebeats.com/" target="_blank" rel="noopener">Accurate Beats</a>
+    </footer>
+
     <script>
+        const formContainer = document.getElementById('form-container');
+        const closedMessage = document.getElementById('closed-message');
         const btn = document.getElementById('tagButton');
+        const btnLabel = btn.querySelector('.label');
+        const btnSpinner = btn.querySelector('.spinner');
         const statusBox = document.getElementById('statusMessage');
-const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
-        
-        btn.addEventListener('click', () => {
-            const file = document.getElementById('fileInput').files[0];
-            const artist = document.getElementById('artistInput').value;
-            const title = document.getElementById('titleInput').value;
-            const genre = document.getElementById('genreInput').value;
-            const notes = document.getElementById('notesInput').value;
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const feedbackBody = document.getElementById('feedbackBody');
+        const feedbackMeta = document.getElementById('feedbackMeta');
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const fileClear = document.getElementById('fileClear');
+        const slotsWidget = document.getElementById('slotsWidget');
+        const slotsUsedEl = document.getElementById('slotsUsed');
+        const slotsMaxEl = document.getElementById('slotsMax');
+        const slotsFill = document.getElementById('slotsFill');
 
-            if (!file) return alert('Please select an MP3 file first!');
-            if (file.size > 10485760) return alert('File is too large! Max 10MB.');
+        const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
+        const slotsUrl = 'https://beats-server-ymi9.onrender.com/slots';
+        const MAX_BYTES = 10485760;
+        const DEFAULT_MAX = 20;
+        const ALLOWED_MAX = [10, 20, 30, 40, 50];
 
-            btn.innerText = 'Processing & Uploading...';
-            btn.disabled = true;
+        let slotsUsed = null;
+        let slotsMax = DEFAULT_MAX;
+        let limitReached = false;
+
+        function normalizeMax(value) {
+            const n = parseInt(value, 10);
+            return ALLOWED_MAX.includes(n) ? n : DEFAULT_MAX;
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(2) + ' MB';
+        }
+
+        function setBusy(busy) {
+            btn.disabled = busy || limitReached;
+            btn.classList.toggle('busy', busy);
+            btnSpinner.hidden = !busy;
+            btnLabel.textContent = busy ? 'Uploading…' : (limitReached ? 'Limit reached' : 'Send to Dropbox');
+        }
+
+        function updateSlotsUI(used, max) {
+            if (typeof used === 'number' && !Number.isNaN(used)) {
+                slotsUsed = used;
+            }
+            if (typeof max === 'number' && max > 0) {
+                slotsMax = normalizeMax(max);
+            }
+
+            const known = typeof slotsUsed === 'number';
+            slotsUsedEl.textContent = known ? String(slotsUsed) : '–';
+            slotsMaxEl.textContent = String(slotsMax);
+
+            const pct = known ? Math.min(100, Math.round((slotsUsed / slotsMax) * 100)) : 0;
+            slotsFill.style.width = pct + '%';
+            slotsWidget.classList.toggle('full', known && slotsUsed >= slotsMax);
+
+            if (known && slotsUsed >= slotsMax) {
+                limitReached = true;
+                setBusy(false);
+            }
+        }
+
+        function showFeedback(type, title, body, metaChips) {
+            const icons = { success: '✓ ', error: '✕ ', limit: '● ' };
+            statusBox.className = 'feedback show ' + type;
+            feedbackTitle.textContent = (icons[type] || '') + title;
+            feedbackBody.textContent = body || '';
+            feedbackMeta.innerHTML = '';
+            (metaChips || []).forEach(function (chip) {
+                const el = document.createElement('span');
+                el.className = 'chip';
+                el.textContent = chip;
+                feedbackMeta.appendChild(el);
+            });
+        }
+
+        function hideFeedback() {
+            statusBox.className = 'feedback';
+            feedbackTitle.textContent = '';
+            feedbackBody.textContent = '';
+            feedbackMeta.innerHTML = '';
+        }
+
+        function updateFileUI() {
+            const file = fileInput.files[0];
+            if (!file) {
+                dropzone.classList.remove('has-file');
+                return;
+            }
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatSize(file.size);
+            dropzone.classList.add('has-file');
+        }
+
+        function clearFile(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            fileInput.value = '';
+            updateFileUI();
+        }
+
+        async function parseResponse(res) {
+            const text = await res.text();
+            try {
+                const json = JSON.parse(text);
+                return { json: json, text: text };
+            } catch (_) {
+                return { json: null, text: text };
+            }
+        }
+
+        async function refreshSlots() {
+            try {
+                const res = await fetch(slotsUrl + '?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                const max = normalizeMax(data.max || slotsMax);
+                if (typeof data.count === 'number') {
+                    updateSlotsUI(data.count, max);
+                } else if (data.max) {
+                    updateSlotsUI(slotsUsed, max);
+                }
+                if (data.full || (typeof data.count === 'number' && data.count >= max)) {
+                    limitReached = true;
+                    showFeedback(
+                        'limit',
+                        'Submission limit reached',
+                        'All ' + max + ' slots are filled for this round. Check back later.',
+                        [(data.count || slotsMax) + ' / ' + max + ' used']
+                    );
+                    setBusy(false);
+                    btn.style.display = 'none';
+                }
+            } catch (_) {
+                /* slots endpoint optional until server is updated */
+            }
+        }
+
+        fetch('status.json?t=' + new Date().getTime())
+            .then(function (res) {
+                if (!res.ok) throw new Error('status.json not found');
+                return res.json();
+            })
+            .then(function (data) {
+                const dynamicMessageElement = document.getElementById('dynamic-custom-message');
+
+                if (data.maxSubmissions !== undefined && data.maxSubmissions !== null) {
+                    updateSlotsUI(slotsUsed, normalizeMax(data.maxSubmissions));
+                }
+
+                if (data.isOpen === false) {
+                    formContainer.style.display = 'none';
+                    closedMessage.style.display = 'block';
+
+                    if (data.message && data.message.trim() !== '') {
+                        dynamicMessageElement.innerText = data.message;
+                        dynamicMessageElement.style.display = 'block';
+                    } else {
+                        dynamicMessageElement.style.display = 'none';
+                    }
+                } else {
+                    formContainer.style.display = 'block';
+                    closedMessage.style.display = 'none';
+                }
+            })
+            .catch(function () {
+                formContainer.style.display = 'block';
+                closedMessage.style.display = 'none';
+            });
+
+        refreshSlots();
+
+        fileInput.addEventListener('change', updateFileUI);
+        fileClear.addEventListener('click', clearFile);
+
+        ['dragenter', 'dragover'].forEach(function (evt) {
+            dropzone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(function (evt) {
+            dropzone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+            });
+        });
+        dropzone.addEventListener('drop', function (e) {
+            const files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || !files.length) return;
+            const file = files[0];
+            if (!file.name.toLowerCase().endsWith('.mp3') && file.type !== 'audio/mpeg') {
+                showFeedback('error', 'Invalid file', 'Please drop an MP3 file.');
+                return;
+            }
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            updateFileUI();
+            hideFeedback();
+        });
+
+        btn.addEventListener('click', function () {
+            if (limitReached) return;
+
+            const file = fileInput.files[0];
+            const artist = document.getElementById('artistInput').value.trim();
+            const title = document.getElementById('titleInput').value.trim();
+            const genre = document.getElementById('genreInput').value.trim();
+            const notes = document.getElementById('notesInput').value.trim();
+
+            if (!file) {
+                showFeedback('error', 'No file selected', 'Choose an MP3 before uploading.');
+                return;
+            }
+            if (file.size > MAX_BYTES) {
+                showFeedback('error', 'File too large', 'Max size is 10 MB. Yours is ' + formatSize(file.size) + '.');
+                return;
+            }
+
+            hideFeedback();
+            setBusy(true);
 
             const reader = new FileReader();
             reader.onload = function () {
@@ -62,56 +900,98 @@ const serverUrl = 'https://beats-server-ymi9.onrender.com/upload';
                     formData.append('genre', genre);
                     formData.append('notes', notes);
 
-                    fetch(serverUrl, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(async res => {
-                        const responseText = await res.text();
+                    fetch(serverUrl, { method: 'POST', body: formData })
+                        .then(async function (res) {
+                            const parsed = await parseResponse(res);
+                            const data = parsed.json;
+                            const responseText = data && data.message ? data.message : parsed.text;
 
-                        if (res.ok) {
-                            statusBox.style.color = 'green';
-                            statusBox.innerText = responseText;
-                            statusBox.style.display = 'block';
+                            if (res.ok) {
+                                const count = data && typeof data.count === 'number' ? data.count : (typeof slotsUsed === 'number' ? slotsUsed + 1 : null);
+                                const max = data && data.max ? data.max : slotsMax;
+                                if (typeof count === 'number') updateSlotsUI(count, max);
 
-                            document.getElementById('fileInput').value = '';
-                            document.getElementById('artistInput').value = '';
-                            document.getElementById('titleInput').value = '';
-                            document.getElementById('genreInput').value = '';
-                            document.getElementById('notesInput').value = '';
-                        } else if (res.status === 403) {
-                            statusBox.style.color = 'red';
-                            statusBox.innerText = responseText;
-                            statusBox.style.display = 'block';
-                            alert(responseText);
-                            btn.style.display = 'none';
-                        } else {
-                            statusBox.style.color = 'red';
-                            statusBox.innerText = responseText;
-                            statusBox.style.display = 'block';
-                            throw new Error(responseText);
-                        }
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        alert('CRASH REPORT (Network): ' + error.message);
-                    })
-                    .finally(() => {
-                        if (btn.style.display !== 'none') {
-                            btn.innerText = 'Send to Dropbox';
-                            btn.disabled = false;
-                        }
-                    });
+                                const fileName = (data && data.fileName) || responseText.replace(/^Success!\s*Files saved as:\s*/i, '');
+                                const remaining = typeof count === 'number' ? Math.max(0, max - count) : null;
+                                const chips = [];
+                                if (fileName) chips.push(fileName);
+                                if (typeof count === 'number') chips.push(count + ' / ' + max + ' slots');
+                                if (remaining !== null) chips.push(remaining + ' left');
+
+                                showFeedback(
+                                    'success',
+                                    'Upload successful',
+                                    'Your MP3 was tagged and saved to Dropbox.',
+                                    chips
+                                );
+
+                                document.getElementById('artistInput').value = '';
+                                document.getElementById('titleInput').value = '';
+                                document.getElementById('genreInput').value = '';
+                                document.getElementById('notesInput').value = '';
+                                clearFile();
+
+                                if (typeof count === 'number' && count >= max) {
+                                    limitReached = true;
+                                    btn.style.display = 'none';
+                                    showFeedback(
+                                        'limit',
+                                        'That filled the last slot',
+                                        'Thanks — submissions are now full for this round (' + max + '/' + max + ').',
+                                        [max + ' / ' + max + ' used']
+                                    );
+                                }
+                            } else if (res.status === 403) {
+                                const count = data && typeof data.count === 'number' ? data.count : slotsMax;
+                                const max = data && data.max ? data.max : slotsMax;
+                                updateSlotsUI(count, max);
+                                limitReached = true;
+                                btn.style.display = 'none';
+                                showFeedback(
+                                    'limit',
+                                    'Submissions full',
+                                    responseText || ('We have reached the ' + max + ' beat limit.'),
+                                    [count + ' / ' + max + ' used']
+                                );
+                            } else {
+                                showFeedback(
+                                    'error',
+                                    'Upload failed',
+                                    responseText || 'Something went wrong. Please try again.',
+                                    ['HTTP ' + res.status]
+                                );
+                            }
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            showFeedback(
+                                'error',
+                                'Network error',
+                                error.message || 'Could not reach the upload server. Try again in a moment.'
+                            );
+                        })
+                        .finally(function () {
+                            if (btn.style.display !== 'none') setBusy(false);
+                        });
                 } catch (e) {
                     console.error(e);
-                    alert('CRASH REPORT (Tagging): ' + e.name + ' - ' + e.message);
-                    btn.innerText = 'Send to Dropbox';
-                    btn.disabled = false;
+                    showFeedback('error', 'Tagging failed', e.name + ' — ' + e.message);
+                    setBusy(false);
                 }
+            };
+
+            reader.onerror = function () {
+                showFeedback('error', 'Could not read file', 'Please re-select the MP3 and try again.');
+                setBusy(false);
             };
 
             reader.readAsArrayBuffer(file);
         });
     </script>
+    <!-- BEAT_REVIEW_CLOCK_SCRIPT -->
+    <script id="beat-review-clock-script">
+        /* Replaced on deploy by clock2.html via Beat Review Admin */
+    </script>
+    <!-- /BEAT_REVIEW_CLOCK_SCRIPT -->
 </body>
 </html>
