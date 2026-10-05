@@ -9,8 +9,64 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
-const MAX_SUBMISSIONS = 20;
+const DEFAULT_MAX_SUBMISSIONS = 20;
+const ALLOWED_MAX_SUBMISSIONS = [10, 20, 30, 40, 50];
+const STATUS_JSON_URL =
+    process.env.STATUS_JSON_URL ||
+    'https://accuratebeats.github.io/Beat-Review/status.json';
+const STATUS_CACHE_MS = 60_000;
 const DROPBOX_FOLDER_PATH = '';
+
+let statusCache = {
+    max: DEFAULT_MAX_SUBMISSIONS,
+    isOpen: true,
+    fetchedAt: 0
+};
+
+function normalizeMaxSubmissions(value) {
+    const parsed = parseInt(value, 10);
+    if (ALLOWED_MAX_SUBMISSIONS.includes(parsed)) {
+        return parsed;
+    }
+    return DEFAULT_MAX_SUBMISSIONS;
+}
+
+async function fetchStatusConfig() {
+    const now = Date.now();
+    if (now - statusCache.fetchedAt < STATUS_CACHE_MS) {
+        return statusCache;
+    }
+
+    const fallback = {
+        max: DEFAULT_MAX_SUBMISSIONS,
+        isOpen: true,
+        fetchedAt: now
+    };
+
+    try {
+        const res = await fetch(`${STATUS_JSON_URL}?t=${now}`, {
+            headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) {
+            statusCache = fallback;
+            return statusCache;
+        }
+        const data = await res.json();
+        const max = normalizeMaxSubmissions(data.maxSubmissions);
+        const isOpen = data.isOpen !== false;
+        statusCache = { max, isOpen, fetchedAt: now };
+        return statusCache;
+    } catch (error) {
+        console.error('STATUS JSON ERROR:', error.message || error);
+        statusCache = fallback;
+        return statusCache;
+    }
+}
+
+async function fetchMaxSubmissions() {
+    const config = await fetchStatusConfig();
+    return config.max;
+}
 
 function getDropboxClient() {
     return new Dropbox({
@@ -25,6 +81,10 @@ function sanitizeFileName(name) {
         .replace(/[\/\\:*?"<>|]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+function sendJson(res, status, payload) {
+    return res.status(status).json(payload);
 }
 
 async function listAllEntries(dbx, folderPath) {
@@ -58,6 +118,38 @@ async function countMp3Files(dbx, folderPath) {
 
 app.get('/', (req, res) => {
     res.send('Server is running.');
+});
+
+/** Public slot count for the uploader UI */
+app.get('/slots', async (req, res) => {
+    try {
+        if (!process.env.DROPBOX_APP_KEY || !process.env.DROPBOX_APP_SECRET || !process.env.DROPBOX_REFRESH_TOKEN) {
+            return sendJson(res, 500, {
+                ok: false,
+                message: 'Dropbox credentials are missing on the server.'
+            });
+        }
+
+        const dbx = getDropboxClient();
+        const count = await countMp3Files(dbx, DROPBOX_FOLDER_PATH);
+        const statusConfig = await fetchStatusConfig();
+        const max = statusConfig.max;
+
+        return sendJson(res, 200, {
+            ok: true,
+            count,
+            max,
+            remaining: Math.max(0, max - count),
+            full: count >= max,
+            isOpen: statusConfig.isOpen
+        });
+    } catch (error) {
+        console.error('SLOTS ERROR:', error);
+        return sendJson(res, 500, {
+            ok: false,
+            message: error?.message || 'Could not read submission count.'
+        });
+    }
 });
 
 app.get('/debug-dropbox', async (req, res) => {
@@ -95,18 +187,47 @@ app.get('/debug-dropbox', async (req, res) => {
 app.post('/upload', upload.single('file'), async (req, res) => {
     try {
         if (!process.env.DROPBOX_APP_KEY || !process.env.DROPBOX_APP_SECRET || !process.env.DROPBOX_REFRESH_TOKEN) {
-            return res.status(500).send('Dropbox credentials are missing on the server.');
+            return sendJson(res, 500, {
+                ok: false,
+                code: 'MISSING_CREDENTIALS',
+                message: 'Dropbox credentials are missing on the server.'
+            });
         }
 
         if (!req.file) {
-            return res.status(400).send('No MP3 file was received by the server.');
+            return sendJson(res, 400, {
+                ok: false,
+                code: 'NO_FILE',
+                message: 'No MP3 file was received by the server.'
+            });
         }
 
         const dbx = getDropboxClient();
+        const statusConfig = await fetchStatusConfig();
+        const maxSubmissions = statusConfig.max;
+
+        if (!statusConfig.isOpen) {
+            return sendJson(res, 403, {
+                ok: false,
+                code: 'SUBMISSIONS_CLOSED',
+                message: 'Submissions are currently closed. Please check back later.',
+                count: null,
+                max: maxSubmissions,
+                remaining: null
+            });
+        }
+
         const mp3Count = await countMp3Files(dbx, DROPBOX_FOLDER_PATH);
 
-        if (mp3Count >= MAX_SUBMISSIONS) {
-            return res.status(403).send(`Submissions are closed! Either it's not open yet OR we've reached the ${MAX_SUBMISSIONS} beat limit.`);
+        if (mp3Count >= maxSubmissions) {
+            return sendJson(res, 403, {
+                ok: false,
+                code: 'LIMIT_REACHED',
+                message: `Submissions are closed! Either it's not open yet OR we've reached the ${maxSubmissions} beat limit.`,
+                count: mp3Count,
+                max: maxSubmissions,
+                remaining: 0
+            });
         }
 
         const file = req.file;
@@ -159,8 +280,17 @@ UPLOADED AT: ${timestamp} (UTC)
             mode: { '.tag': 'overwrite' }
         });
 
-        console.log(`Uploaded successfully: ${cleanBaseName} (Total Submissions: ${mp3Count + 1}/${MAX_SUBMISSIONS})`);
-        return res.status(200).send(`Success! Files saved as: ${cleanBaseName}`);
+        const newCount = mp3Count + 1;
+        console.log(`Uploaded successfully: ${cleanBaseName} (Total Submissions: ${newCount}/${maxSubmissions})`);
+
+        return sendJson(res, 200, {
+            ok: true,
+            message: `Success! Files saved as: ${cleanBaseName}`,
+            fileName: cleanBaseName,
+            count: newCount,
+            max: maxSubmissions,
+            remaining: Math.max(0, maxSubmissions - newCount)
+        });
     } catch (error) {
         console.error('UPLOAD ERROR FULL:', error);
 
@@ -171,9 +301,12 @@ UPLOADED AT: ${timestamp} (UTC)
             errorMessage = error.message;
         }
 
-        return res.status(500).send(
-            `DEBUG ERROR | status: ${error?.status || 'none'} | message: ${errorMessage}`
-        );
+        return sendJson(res, 500, {
+            ok: false,
+            code: 'UPLOAD_ERROR',
+            message: `Upload failed: ${errorMessage}`,
+            status: error?.status || null
+        });
     }
 });
 
