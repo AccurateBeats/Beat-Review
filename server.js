@@ -9,8 +9,8 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer({ storage: multer.memoryStorage() });
-const DEFAULT_MAX_SUBMISSIONS = 10;
-const ALLOWED_MAX_SUBMISSIONS = [10, 20, 30, 40, 50];
+const DEFAULT_MAX_SUBMISSIONS = 200;
+const ALLOWED_MAX_SUBMISSIONS = [10, 20, 30, 40, 50, 200];
 const STATUS_JSON_URL =
     process.env.STATUS_JSON_URL ||
     'https://accuratebeats.github.io/Beat-Review/status.json';
